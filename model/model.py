@@ -2,9 +2,10 @@
 model.py
 '''
 import copy
+from openai import OpenAI
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# opensource_model
+# opensource_model -- oldversion
 class LLM:
 
     def __init__(self, model_name_or_path, device, whitebox_attacker=False):
@@ -41,3 +42,27 @@ class LLM:
         )
         response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response
+    
+class vLLM:
+    
+    def __init__(self, api_key, base_url, model_name):
+        self.client = OpenAI(
+            api_key = api_key,
+            base_url = base_url
+        )
+        self.model_name = model_name
+    
+    def generate(self, prompt):
+        completion = self.client.chat.completions.create(
+            messages = [{
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': prompt
+                    }
+                ]
+            }],
+            model = self.model_name
+        )
+        return completion.choices[0].message.content
