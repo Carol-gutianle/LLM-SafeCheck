@@ -24,11 +24,13 @@ python -m model.inference \
     --save_path {local_path_to_save_generated_results} \
     --prompt_key "goal"
 ```
+For parallel inference, you can utilize `model.model.vLLM.parallel`, which enables efficient processing across multiple inputs simultaneously.
 
 
 ## Road Map
 - [x] SafeDecoding
 - [x] Flames
+- [x] GCG (nanoGCG)
 
 ## References
 SafeDecoding
@@ -51,5 +53,16 @@ Flames
       eprint={2311.06899},
       archivePrefix={arXiv},
       primaryClass={cs.CL}
+}
+```
+GCG
+```
+@misc{zou2023universal,
+    title={Universal and Transferable Adversarial Attacks on Aligned Language Models},
+    author={Andy Zou and Zifan Wang and Nicholas Carlini and Milad Nasr and J. Zico Kolter and Matt Fredrikson},
+    year={2023},
+    eprint={2307.15043},
+    archivePrefix={arXiv},
+    primaryClass={cs.CL}
 }
 ```
