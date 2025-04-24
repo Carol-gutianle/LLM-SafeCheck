@@ -2,6 +2,9 @@
 model.py
 '''
 import copy
+import asyncio
+import aiohttp
+from tqdm import tqdm
 from openai import OpenAI
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -46,6 +49,7 @@ class LLM:
 class vLLM:
     
     def __init__(self, api_key, base_url, model_name):
+        self.base_url = base_url
         self.client = OpenAI(
             api_key = api_key,
             base_url = base_url
@@ -66,3 +70,44 @@ class vLLM:
             model = self.model_name
         )
         return completion.choices[0].message.content
+
+    async def generate_async(self, session, api_url, prompt):
+        header = {"Content-Type": "application/json"}
+        payload = {
+            'messages': [{
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': prompt
+                    }
+                ]
+            }],
+            'model': self.model_name
+        }
+        async with session.post(api_url, headers=header, json=payload) as resp:
+            if resp.status != 200:
+                raise Exception(f"Request failed with status {resp.status}")
+            data = await resp.json()
+            return data['choices'][0]['message']['content']
+    
+    async def parallel_generate(self, prompts, max_concurrent):
+        semaphore = asyncio.Semaphore(max_concurrent)
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for prompt in tqdm(prompts):
+                async def sem_task(prompt=prompt):
+                    async with semaphore:
+                        return await self.generate_async(session, self.base_url, prompt)
+                tasks.append(sem_task(prompt))
+            results = []
+            for future in asyncio.as_completed(tasks):
+                result = await future
+                results.append(result)
+            return results
+    
+    def parallel(self, prompts, max_concurrent):
+        results = asyncio.run(
+            self.parallel_generate(prompts, max_concurrent=max_concurrent)
+        )
+        return results
